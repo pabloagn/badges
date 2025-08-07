@@ -1,47 +1,54 @@
 name: Update profile cards
 
-# --- Triggers ---
+# ── Triggers ─────────────────────────────────────────────
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 3 * * *" # daily 03:00 UTC
+    - cron: "0 3 * * *"     # daily 03:00 UTC
   push:
-    branches: [main]
+    branches: [ main ]
 
-# --- Job ---
+# ── Required write-permission for auto-commit ───────────
+permissions:
+  contents: write
+
+# ── Job ─────────────────────────────────────────────────
 jobs:
   build:
     runs-on: ubuntu-latest
 
     env:
-      GH_USER: ${{ secrets.GH_USER }}
+      GH_USER:      ${{ secrets.GH_USER }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      # 1. Checkout repo
+      # 1 ─ Checkout (with write-capable token)
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Node toolchain
+      # 2 ─ Node toolchain
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      # 3. Install deps & build TS
+      # 3 ─ Install deps & build
       - run: npm ci
       - run: npm run build
 
-      # 4. Generate the three cards
+      # 4 ─ Generate cards
       - run: node dist/language-card.js
       - run: node dist/contrib-card.js
       - run: node dist/lastcommit-card.js
       - run: node dist/commit-history-card.js
 
-      # 5. Commit updated assets
+      # 5 ─ Commit & push if anything changed
       - name: Commit & push cards
         run: |
-          git config user.name  "gh-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "actions@github.com"
-          git add public/cards/*.*
+          git add -f public/cards/*
           git diff --cached --quiet || git commit -m "chore: auto-update profile cards"
-          git push
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+

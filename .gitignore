@@ -19,6 +19,7 @@ yarn-error.log*
 # Node / TypeScript
 node_modules/
 dist/
+public/
 
 # Logs & debug
 npm-debug.log*

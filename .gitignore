@@ -3,8 +3,8 @@ node_modules/
 dist/
 
 # Env / secrets
-.env*
 .direnv
+.env
 
 # Logs & debug
 npm-debug.log*
@@ -19,9 +19,6 @@ yarn-error.log*
 # Node / TypeScript
 node_modules/
 dist/
-
-# Env / secrets
-.env*
 
 # Logs & debug
 npm-debug.log*

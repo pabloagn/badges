@@ -1,42 +1,60 @@
 #!/usr/bin/env node
-import { octo, user } from "./utils/github.js";
+import { ghQL, user } from "./utils/github.js";
 import QuickChart from "quickchart-js";
 import fs from "node:fs/promises";
 
-const main = async () => {
-  const { data } = await octo.graphql<any>(
+interface Week {
+  firstDay: string;
+  contributionDays: { contributionCount: number }[];
+}
+
+const main = async (): Promise<void> => {
+  const { user: ghUser } = await ghQL<{ user: any }>(
     `
-    query ($user:String!){
-      user(login:$user){
+    query ($login:String!){
+      user(login:$login){
         contributionsCollection {
           contributionCalendar {
-            weeks { contributionDays { contributionCount date } }
+            weeks {
+              firstDay
+              contributionDays { contributionCount }
+            }
           }
         }
       }
     }`,
-    { user },
+    { login: user },
   );
 
-  const days = data.user.contributionsCollection.contributionCalendar.weeks
-    .flatMap((w: any) => w.contributionDays)
-    .slice(-365); // last year
+  if (!ghUser) {
+    console.error(`User “${user}” not found.`);
+    process.exit(1);
+  }
 
-  const labels = days.map((d: any) => d.date);
-  const counts = days.map((d: any) => d.contributionCount);
+  // One point per week → ~52 points
+  const weeks: Week[] =
+    ghUser.contributionsCollection.contributionCalendar.weeks;
+
+  const labels = weeks.map((w) => w.firstDay);
+  const counts = weeks.map((w) =>
+    w.contributionDays.reduce((sum, d) => sum + d.contributionCount, 0),
+  );
 
   const qc = new QuickChart();
   qc.setConfig({
-    type: "line",
-    data: { labels, datasets: [{ data: counts, fill: false }] },
+    type: "bar",
+    data: { labels, datasets: [{ data: counts }] },
     options: {
       legend: { display: false },
-      scales: { xAxes: [{ display: false }], yAxes: [{ display: false }] },
+      scales: {
+        xAxes: [{ display: false }],
+        yAxes: [{ display: false }],
+      },
       title: { display: false },
     },
   })
-    .setWidth(600)
-    .setHeight(120)
+    .setWidth(1600) // higher resolution
+    .setHeight(240)
     .setBackgroundColor("transparent");
 
   await fs.mkdir("public/cards", { recursive: true });

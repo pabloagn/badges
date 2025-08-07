@@ -19,7 +19,8 @@ yarn-error.log*
 # Node / TypeScript
 node_modules/
 dist/
-public/
+!public/cards/**
+public/*
 
 # Logs & debug
 npm-debug.log*

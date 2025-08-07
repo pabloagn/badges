@@ -17,9 +17,9 @@ const fetchTotals = async (): Promise<Tallies> => {
   const tally: Tallies = {};
   for (const repo of repos) {
     const { data } = await octo.request(repo.languages_url as any);
-    for (const [rawLang, bytes] of Object.entries<number>(data)) {
-      if (EXCLUDED_LANGUAGES.includes(rawLang)) continue;
-      const lang = LANGUAGE_ALIASES[rawLang] ?? rawLang;
+    for (const [raw, bytes] of Object.entries<number>(data)) {
+      if (EXCLUDED_LANGUAGES.includes(raw)) continue;
+      const lang = LANGUAGE_ALIASES[raw] ?? raw;
       tally[lang] = (tally[lang] ?? 0) + bytes;
     }
   }
@@ -37,20 +37,34 @@ const main = async () => {
   const data   = labels.map(l => +((100 * totals[l]) / sum).toFixed(1));
   const colors = labels.map(l => LANGUAGE_COLORS[l] ?? "#6e7681");
 
+  const fontSize = 22;                 // bigger labels
+  const barThick = 18;
+  const height   = labels.length * 60; // taller card
+
   const qc = new QuickChart();
   qc.setConfig({
     type: "horizontalBar",
-    data: { labels, datasets: [{ data, backgroundColor: colors, barThickness: 12 }] },
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, barThickness: barThick }],
+    },
     options: {
       legend: { display: false },
+      layout: { padding: { right: 30 } },
       scales: {
-        xAxes: [{ ticks: { callback: (v: any) => v + "%" } }],
-        yAxes: [{ gridLines: { display: false } }],
+        xAxes: [{
+          ticks: { callback: (v: any) => v + "%", fontSize, fontColor: "#ffffff" },
+          gridLines: { display: false },
+        }],
+        yAxes: [{
+          ticks: { fontSize, fontColor: "#ffffff", padding: 12 },
+          gridLines: { display: false },
+        }],
       },
     },
   })
     .setWidth(1600)
-    .setHeight(240)
+    .setHeight(height)
     .setBackgroundColor("transparent");
 
   await fs.mkdir("public/cards", { recursive: true });

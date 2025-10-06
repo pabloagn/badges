@@ -4,6 +4,6 @@
     .sub  { font: 400 11px monospace; fill:#9fa4b3 }
   </style>
   <rect width='100%' height='100%' fill='transparent'/>
-  <text x='5' y='20' class='base'>Last commit → feat(home): clean slate for resuming dev</text>
-  <text x='5' y='40' class='sub'>@pabloagn/rhodium — 10/3/2025, 5:44:55 PM</text>
+  <text x='5' y='20' class='base'>Last commit → feat(tailscale): added tailscale service</text>
+  <text x='5' y='40' class='sub'>@pabloagn/rhodium — 10/5/2025, 10:44:56 PM</text>
 </svg>

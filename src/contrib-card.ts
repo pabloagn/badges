@@ -4,13 +4,12 @@ import QuickChart from "quickchart-js";
 import fs from "node:fs/promises";
 
 interface Week {
-  firstDay: string;
+  firstDay: string;                                   // ISO date
   contributionDays: { contributionCount: number }[];
 }
 
-const main = async (): Promise<void> => {
-  const { user: ghUser } = await ghQL<{ user: any }>(
-    `
+const main = async () => {
+  const { user: ghUser } = await ghQL<{ user: any }>(`
     query ($login:String!){
       user(login:$login){
         contributionsCollection {
@@ -22,43 +21,66 @@ const main = async (): Promise<void> => {
           }
         }
       }
-    }`,
-    { login: user },
-  );
+    }`, { login: user });
 
-  if (!ghUser) {
-    console.error(`User “${user}” not found.`);
-    process.exit(1);
-  }
+  if (!ghUser) process.exit(1);
 
-  // One point per week → ~52 points
+  const thisYear = new Date().getFullYear();          // ▼ filter to current year
   const weeks: Week[] =
-    ghUser.contributionsCollection.contributionCalendar.weeks;
+    ghUser.contributionsCollection.contributionCalendar.weeks
+      .filter((w: Week) => new Date(w.firstDay).getFullYear() === thisYear);
 
-  const labels = weeks.map((w) => w.firstDay);
-  const counts = weeks.map((w) =>
-    w.contributionDays.reduce((sum, d) => sum + d.contributionCount, 0),
+  const labels = weeks.map(w => w.firstDay.slice(0, 10));
+  const counts = weeks.map(w =>
+    w.contributionDays.reduce((s, d) => s + d.contributionCount, 0)
   );
 
   const qc = new QuickChart();
   qc.setConfig({
-    type: "bar",
-    data: { labels, datasets: [{ data: counts }] },
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        data: counts,
+        fill: true,
+        lineTension: 0.25,
+        borderColor: "#7FB4CA",
+        backgroundColor: "rgba(127,180,202,0.25)",
+        pointRadius: 0,
+      }],
+    },
     options: {
       legend: { display: false },
       scales: {
-        xAxes: [{ display: false }],
-        yAxes: [{ display: false }],
+        xAxes: [{
+          ticks: {
+            fontColor: "#ffffff",
+            fontSize: 24,
+            maxRotation: 45,
+            minRotation: 45,
+            maxTicksLimit: 12,
+            autoSkip: true,
+          },
+          gridLines: { display: false },
+        }],
+        yAxes: [{
+          ticks: { display: false },
+          gridLines: { display: false },
+        }],
       },
-      title: { display: false },
     },
   })
-    .setWidth(1600) // higher resolution
-    .setHeight(240)
+    .setWidth(2400)
+    .setHeight(600)
+    .setDevicePixelRatio(2)
     .setBackgroundColor("transparent");
 
   await fs.mkdir("public/cards", { recursive: true });
-  await fs.writeFile("public/cards/contributions.png", await qc.toBinary());
+  await fs.writeFile(
+    "public/cards/contributions.png",
+    await qc.toBinary()
+  );
 };
 
 main();
+

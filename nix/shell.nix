@@ -10,6 +10,5 @@ pkgs.mkShell {
   ];
   shellHook = ''
     export NODE_ENV=development
-    echo "Dev shell ready – run:  npm ci && npm run build"
   '';
 }

@@ -38,10 +38,18 @@ jobs:
       - run: npm run build
 
       # 4. Generate cards
-      - run: node dist/language-card.js
-      - run: node dist/contrib-card.js
-      - run: node dist/lastcommit-card.js
-      - run: node dist/commit-history-card.js
+      - name: Generate language card
+        run: node dist/language-card.js
+        continue-on-error: true
+      - name: Generate contributions card
+        run: node dist/contrib-card.js
+        continue-on-error: true
+      - name: Generate last commit card
+        run: node dist/lastcommit-card.js
+        continue-on-error: true
+      - name: Generate commit history card
+        run: node dist/commit-history-card.js
+        continue-on-error: true
 
       # 5. Commit & push if anything changed
       - name: Commit & push cards

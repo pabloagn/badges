@@ -22,6 +22,13 @@ const main = async () => {
   }
 
   const { repo, created_at, payload } = push;
+
+  // Ensure commits array exists and has at least one commit
+  if (!payload.commits || payload.commits.length === 0) {
+    console.error("PushEvent found but no commits in payload — skipping.");
+    process.exit(1);
+  }
+
   const msg = payload.commits[0].message.split("\n")[0];
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="60">
